@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random User Generator</title>
+    <style>
+        .photo {
+            max-width: 150px;
+            border-radius: 50%;
+        }
+        .email, .password, .gender, .phone, .location, .birthday {
+            font-weight: bold;
+        }
+        body{
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #22574d;
+        }
+        .name {
+            font-size: 1.5em;
+        }
+        .user, .saved {
+            font-family: Arial, sans-serif;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<h1>Random User Generator</h1>
+<button id="get-user-button">Get User</button>
+<button id="save-users-button">Save Users</button>
+<div id="user-container"></div>
+<h3>Saved Users</h3>
+<div id="saved-user-container"></div>
+<script>
+    async function fetchUserData() {
+        try {
+            const response = await fetch('https://randomuser.me/api/');
+            const data = await response.json();
+            const user = data.results[0];
+
+            const dob = new Date(user.dob.date);
+            const formattedDob = dob.toLocaleDateString('en-GB');
+
+            const userDiv = document.createElement('div');
+            userDiv.className = 'user';
+
+            userDiv.innerHTML = `
+                    <img src="${user.picture.large}" alt="User Photo" class="photo">
+                    <h2 class="name">${user.name.first} ${user.name.last}</h2>
+                    <p class="email">Email: ${user.email}</p>
+                    <p class="password">Password: ${user.login.password}</p>
+                    <p class="gender">Gender: ${user.gender}</p>
+                    <p class="phone">Phone: ${user.phone}</p>
+                    <p class="location">Location: ${user.location.city}, ${user.location.country}</p>
+                    <p class="birthday">Birthday: ${formattedDob}</p>
+                `;
+
+            document.getElementById('user-container').appendChild(userDiv);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    }
+
+    function saveUsers() {
+        const userContainer = document.getElementById('user-container');
+        const savedUserContainer = document.getElementById('saved-user-container');
+
+        const users = Array.from(userContainer.getElementsByClassName('user'));
+        const userData = users.map(user => ({
+            picture: user.querySelector('img').src,
+            name: user.querySelector('.name').textContent,
+            email: user.querySelector('.email').textContent.split(': ')[1],
+            password: user.querySelector('.password').textContent.split(': ')[1],
+            gender: user.querySelector('.gender').textContent.split(': ')[1],
+            phone: user.querySelector('.phone').textContent.split(': ')[1],
+            location: user.querySelector('.location').textContent.split(': ')[1],
+            birthday: user.querySelector('.birthday').textContent.split(': ')[1],
+        }));
+
+        localStorage.setItem('savedUsers', JSON.stringify(userData));
+
+        // Clear previous saved users from the UI
+        savedUserContainer.innerHTML = '';
+
+        // Append new saved users to the UI
+        userData.forEach(user => {
+            const userDiv = document.createElement('div');
+            userDiv.className = 'user saved';
+
+            userDiv.innerHTML = `
+                    <img src="${user.picture}" alt="User Photo" class="photo">
+                    <h2 class="name">${user.name}</h2>
+                    <p class="email">Email: ${user.email}</p>
+                    <p class="password">Password: ${user.password}</p>
+                    <p class="gender">Gender: ${user.gender}</p>
+                    <p class="phone">Phone: ${user.phone}</p>
+                    <p class="location">Location: ${user.location}</p>
+                    <p class="birthday">Birthday: ${user.birthday}</p>
+                `;
+
+            savedUserContainer.appendChild(userDiv);
+        });
+    }
+
+    function loadSavedUsers() {
+        const savedUsers = JSON.parse(localStorage.getItem('savedUsers'));
+        const savedUserContainer = document.getElementById('saved-user-container');
+
+        if (savedUsers) {
+            savedUsers.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user saved';
+
+                userDiv.innerHTML = `
+                        <img src="${user.picture}" alt="User Photo" class="photo">
+                        <h2 class="name">${user.name}</h2>
+                        <p class="email">Email: ${user.email}</p>
+                        <p class="password">Password: ${user.password}</p>
+                        <p class="gender">Gender: ${user.gender}</p>
+                        <p class="phone">Phone: ${user.phone}</p>
+                        <p class="location">Location: ${user.location}</p>
+                        <p class="birthday">Birthday: ${user.birthday}</p>
+                    `;
+
+                savedUserContainer.appendChild(userDiv);
+            });
+        }
+    }
+
+    window.onload = function() {
+        fetchUserData();
+        loadSavedUsers();
+    }
+
+    document.getElementById('get-user-button').addEventListener('click', fetchUserData);
+    document.getElementById('save-users-button').addEventListener('click', saveUsers);
+</script>
+</body>
+</html>
